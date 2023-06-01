@@ -12,15 +12,14 @@ const App = () => {
 	const [path, setPath] = useState('');
 
 	const read = async () => {
-		const data = await storage.read(new Path(readTarget));
+		const path = new Path(readTarget);
+		if (!storage.exists(path)) return;
+		console.log(path);
+		const data = await storage.read(path);
 		setData(data);
 	};
 
 	const updateItems = async () => {
-		// await storage.write(new Path('empty/sss.txt'), '123');
-		// await storage.delete(new Path('empty/sss.txt'));
-
-		await storage.deleteEmptyFolders(new Path(''));
 		setItems(await storage.getItems(new Path(path)));
 	};
 
@@ -43,13 +42,18 @@ const App = () => {
 				<span>Read: </span>
 				<input onChange={(x) => setReadTarget(x.target.value)} placeholder='filename..'></input>
 			</div>
-			{data && <div>Readed: {data}</div>}
+			{data && (
+				<div>
+					<p>Readed:</p>
+					{data}
+				</div>
+			)}
 			{items && (
 				<div>
 					{items.map((x) => (
-						<div>
+						<div key={x.path.value}>
 							<button onClick={() => storage.delete(x.path)}>🗑️</button>
-							<span key={x.path.value}>
+							<span>
 								{x.isFolder ? '📂\t' : '📄\t'}
 								{x.path.value}
 							</span>

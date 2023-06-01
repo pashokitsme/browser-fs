@@ -1,3 +1,4 @@
+import { Buffer } from 'buffer';
 import { FileProvider, Uri } from './internal/FileProvider';
 import Path from './internal/Path';
 
@@ -136,7 +137,10 @@ export class BrowserFileProvider implements FileProvider {
 	}
 
 	private async readBuffer(handle: FileSystemFileHandle) {
-		if (!handle) throw new Error(`File not exists`);
+		if (!handle) {
+			console.warn(`File not exists`);
+			return;
+		}
 		const file = await handle.getFile();
 		const data = await file.stream().getReader().read();
 		return Buffer.from(data?.value);
