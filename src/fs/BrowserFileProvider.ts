@@ -10,7 +10,7 @@ export class BrowserFileProvider implements FileProvider {
 	}
 
 	getStorageId(): string {
-		const user = document.cookie.split('user=')[1].split('%')[0];
+		const user = (document.cookie.split('user=')[1] ?? 'unknown').split('%')[0];
 		return `Browser@${user}`;
 	}
 
@@ -33,15 +33,33 @@ export class BrowserFileProvider implements FileProvider {
 		return !!(await this.directory(path)) || !!(await this.file(path));
 	}
 
-	delete: (path: Path) => void;
+	async delete(path: Path) {
+		const name = path.nameWithExtension;
+		const directory = await this.directory(path, { useRoot: true });
+		await directory
+			.removeEntry(name, { recursive: true })
+			.catch(() => console.warn(`Entry ${path} not found`));
+	}
 
-	deleteEmptyFolders: (path: Path) => void;
+	async deleteEmptyFolders(path: Path) {
+		const directory = await this.directory(path);
+		if (!directory) return;
+		for await (const [path, handle] of directory.entries()) {
+			if (handle.kind === 'file') continue;
+			const inner = await directory.getDirectoryHandle(path);
+			if (await this.isEmpty(inner)) {
+				console.log(inner);
+				await directory.removeEntry(handle.name);
+				console.info(`Deleting empty: ${path}`);
+			}
+		}
+	}
 
 	async write(path: Path, data: string | Buffer) {
 		console.info(`Writing file ${path}`);
 		this.stopWatch();
 		const filename = path.nameWithExtension;
-		const directory = await this.directory(path.rootDirectory, true);
+		const directory = await this.directory(path.rootDirectory, { useRoot: false, create: true });
 		const file = await directory.getFileHandle(filename, { create: true });
 		const stream = await file.createWritable({ keepExistingData: false });
 
@@ -60,13 +78,24 @@ export class BrowserFileProvider implements FileProvider {
 
 	stopWatch() {}
 
+	private async isEmpty(directory: FileSystemDirectoryHandle) {
+		for await (const _ of directory.entries()) return false;
+		return true;
+	}
+
 	private async directory(
 		path: Path,
-		create?: boolean,
+		{ useRoot, create }: { useRoot?: boolean; create?: boolean } = {},
 	): Promise<FileSystemDirectoryHandle | undefined> {
-		return path.value == ''
+		const _path = useRoot
+			? path.rootDirectory.value == path.value
+				? new Path('')
+				: path.rootDirectory
+			: path;
+
+		return _path.value == ''
 			? this.storage()
-			: path.value.split('/').reduce(async (prev, path) => {
+			: _path.value.split('/').reduce(async (prev, path) => {
 					return (prev = prev.then((x) =>
 						x.getDirectoryHandle(path, { create }).catch(() => undefined),
 					)).catch(() => undefined);
@@ -74,8 +103,7 @@ export class BrowserFileProvider implements FileProvider {
 	}
 
 	private async file(path: Path, create?: boolean): Promise<FileSystemFileHandle | undefined> {
-		const root = path.rootDirectory.value == path.value ? new Path('') : path.rootDirectory;
-		const directory = await this.directory(root).catch(() => undefined);
+		const directory = await this.directory(path, { useRoot: true }).catch(() => undefined);
 		return directory
 			? directory.getFileHandle(path.nameWithExtension, { create }).catch(() => undefined)
 			: undefined;
