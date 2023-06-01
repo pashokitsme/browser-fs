@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		"downlevelIteration": true,
+		"jsx": "preserve",
+		"target": "ES2017",
+		"lib": ["dom", "dom.iterable", "esnext"],
+		"allowJs": true,
+		"skipLibCheck": true,
+		"strict": false,
+		"forceConsistentCasingInFileNames": false,
+		"noEmit": true,
+		"esModuleInterop": true,
+		"module": "esnext",
+		"moduleResolution": "node",
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"incremental": true,
+		"allowSyntheticDefaultImports": true,
+		"declaration": false,
+		"declarationMap": false
+	},
+	"include": ["./src/**/*"]
+}
