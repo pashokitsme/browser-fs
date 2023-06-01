@@ -17,8 +17,8 @@ export interface FileProvider {
 
 	// initWatcher: (watcher: Watcher) => void;
 	// watch: (onChange: (changeItems: ChangeItem[]) => void) => void;
-	startWatch: () => void;
-	stopWatch: () => void;
+	// startWatch: () => void;
+	// stopWatch: () => void;
 }
 
 export interface Uri {

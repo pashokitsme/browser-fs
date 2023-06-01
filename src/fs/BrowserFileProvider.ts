@@ -57,7 +57,6 @@ export class BrowserFileProvider implements FileProvider {
 
 	async write(path: Path, data: string | Buffer) {
 		console.info(`Writing file ${path}`);
-		this.stopWatch();
 		const filename = path.nameWithExtension;
 		const directory = await this.directory(path.rootDirectory, { useRoot: false, create: true });
 		const file = await directory.getFileHandle(filename, { create: true });
@@ -65,7 +64,6 @@ export class BrowserFileProvider implements FileProvider {
 
 		await stream.write(data);
 		await stream.close();
-		this.startWatch();
 	}
 
 	async read(path: Path): Promise<string> {
@@ -84,10 +82,6 @@ export class BrowserFileProvider implements FileProvider {
 			? this.moveDirectory(handle, newFilePath)
 			: this.moveFile(handle, oldFilePath, newFilePath);
 	}
-
-	startWatch() {}
-
-	stopWatch() {}
 
 	private async isEmpty(directory: FileSystemDirectoryHandle) {
 		for await (const _ of directory.entries()) return false;
