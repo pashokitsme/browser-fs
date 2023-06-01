@@ -34,6 +34,7 @@ export class BrowserFileProvider implements FileProvider {
 	}
 
 	async delete(path: Path) {
+		console.log(`Deleting: ${path}`);
 		const name = path.nameWithExtension;
 		const directory = await this.directory(path, { useRoot: true });
 		await directory
@@ -48,7 +49,6 @@ export class BrowserFileProvider implements FileProvider {
 			if (handle.kind === 'file') continue;
 			const inner = await directory.getDirectoryHandle(path);
 			if (await this.isEmpty(inner)) {
-				console.log(inner);
 				await directory.removeEntry(handle.name);
 				console.info(`Deleting empty: ${path}`);
 			}
@@ -68,7 +68,17 @@ export class BrowserFileProvider implements FileProvider {
 		this.startWatch();
 	}
 
-	read: (path: Path) => string;
+	async read(path: Path): Promise<string> {
+		const file = await this.file(path).then((handle) => handle?.getFile());
+		if (!file) {
+			console.warn(`File ${path} not found`);
+			return;
+		}
+
+		const data = await file.stream().getReader().read();
+		const decoder = new TextDecoder();
+		return decoder.decode(data.value?.buffer);
+	}
 
 	readAsBinary: (path: Path) => Buffer;
 

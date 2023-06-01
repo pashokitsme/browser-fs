@@ -10,7 +10,7 @@ export interface FileProvider {
 	// getStat: (path: Path) => Stats;
 	deleteEmptyFolders: (path: Path) => void;
 	write: (path: Path, data: string | Buffer) => void;
-	read: (path: Path) => string;
+	read: (path: Path) => Promise<string>;
 	readAsBinary: (path: Path) => Buffer;
 	// getItemRef: (path: Path) => ItemRef;
 	move: (oldFilePath: Path, newFilePath: Path) => void;
