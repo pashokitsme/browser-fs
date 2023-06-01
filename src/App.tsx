@@ -37,11 +37,11 @@ const App = () => {
 			<p>StorageId: {storage.getStorageId()}</p>
 			<div>
 				<span>Path: </span>
-				<input onChange={(x) => setPath(x.target.value)}></input>
+				<input onChange={(x) => setPath(x.target.value)} placeholder='filename..'></input>
 			</div>
 			<div>
 				<span>Read: </span>
-				<input onChange={(x) => setReadTarget(x.target.value)}></input>
+				<input onChange={(x) => setReadTarget(x.target.value)} placeholder='filename..'></input>
 			</div>
 			{data && <div>Readed: {data}</div>}
 			{items && (
