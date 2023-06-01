@@ -11,7 +11,7 @@ export interface FileProvider {
 	deleteEmptyFolders: (path: Path) => void;
 	write: (path: Path, data: string | Buffer) => void;
 	read: (path: Path) => Promise<string>;
-	readAsBinary: (path: Path) => Buffer;
+	readAsBinary: (path: Path) => Promise<Buffer>;
 	// getItemRef: (path: Path) => ItemRef;
 	move: (oldFilePath: Path, newFilePath: Path) => void;
 

@@ -47,10 +47,13 @@ const App = () => {
 			{items && (
 				<div>
 					{items.map((x) => (
-						<p key={x.path.value}>
-							{x.isFolder ? '📂\t' : '📄\t'}
-							{x.path.value}
-						</p>
+						<div>
+							<button onClick={() => storage.delete(x.path)}>🗑️</button>
+							<span key={x.path.value}>
+								{x.isFolder ? '📂\t' : '📄\t'}
+								{x.path.value}
+							</span>
+						</div>
 					))}
 				</div>
 			)}

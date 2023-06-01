@@ -69,20 +69,21 @@ export class BrowserFileProvider implements FileProvider {
 	}
 
 	async read(path: Path): Promise<string> {
-		const file = await this.file(path).then((handle) => handle?.getFile());
-		if (!file) {
-			console.warn(`File ${path} not found`);
-			return;
-		}
-
-		const data = await file.stream().getReader().read();
+		const data = await this.readAsBinary(path);
 		const decoder = new TextDecoder();
-		return decoder.decode(data.value?.buffer);
+		return decoder.decode(data);
 	}
 
-	readAsBinary: (path: Path) => Buffer;
+	async readAsBinary(path: Path): Promise<Buffer> {
+		return await this.readBuffer(await this.file(path));
+	}
 
-	move: (oldFilePath: Path, newFilePath: Path) => void;
+	async move(oldFilePath: Path, newFilePath: Path) {
+		const handle = (await this.file(oldFilePath)) ?? (await this.directory(oldFilePath));
+		return handle.kind === 'directory'
+			? this.moveDirectory(handle, newFilePath)
+			: this.moveFile(handle, oldFilePath, newFilePath);
+	}
 
 	startWatch() {}
 
@@ -91,6 +92,34 @@ export class BrowserFileProvider implements FileProvider {
 	private async isEmpty(directory: FileSystemDirectoryHandle) {
 		for await (const _ of directory.entries()) return false;
 		return true;
+	}
+
+	private async moveDirectory(directory: FileSystemDirectoryHandle, dst: Path) {
+		const promises = [];
+		for await (const [path, handle] of directory.entries()) {
+			if (handle.kind === 'directory') {
+				promises.push(
+					new Promise(async () => {
+						await this.moveDirectory(handle, dst.join(new Path(handle.name))).catch(console.error);
+						await this.delete(new Path(path));
+					}),
+				);
+				continue;
+			}
+
+			promises.push(
+				this.moveFile(handle, new Path(path), dst.join(new Path(handle.name))).catch(console.error),
+			);
+		}
+
+		await Promise.all(promises);
+	}
+
+	private async moveFile(handle: FileSystemFileHandle, from: Path, dst: Path) {
+		const data = await this.readBuffer(handle);
+		if (!data) return;
+		await this.write(dst, data);
+		await this.delete(from);
 	}
 
 	private async directory(
@@ -110,6 +139,13 @@ export class BrowserFileProvider implements FileProvider {
 						x.getDirectoryHandle(path, { create }).catch(() => undefined),
 					)).catch(() => undefined);
 			  }, this.storage());
+	}
+
+	private async readBuffer(handle: FileSystemFileHandle) {
+		const file = await handle.getFile();
+		if (!file) throw new Error(`File not exists`);
+		const data = await file.stream().getReader().read();
+		return Buffer.from(data?.value);
 	}
 
 	private async file(path: Path, create?: boolean): Promise<FileSystemFileHandle | undefined> {
